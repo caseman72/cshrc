@@ -1,0 +1,79 @@
+#! /bin/bash
+
+### .files
+#
+_src_dot_files=( csh.aliases  cshrc  exrc  gitconfig gitexcludes  mycolors  screenrc minttyrc vimrc  Xdefaults )
+_dest_dot_links=( .csh.aliases .cshrc .exrc .gitconfig .gitexcludes .mycolors .screenrc .minttyrc .vimrc .Xdefaults )
+
+### ~/bin/files
+#
+if [ "${OSTYPE}" == "darwin" ]; then
+	_src_bin_files=( vic jsmin.sh vimterm chperm )
+	_dest_bin_links=( vic jsmin.sh vimterm chperm )
+else
+	_src_bin_files=( vic jsmin.sh chperm archistory parse-loc )
+	_dest_bin_links=( vic jsmin.sh chperm archistory parse-loc )
+fi
+
+### paths
+#
+cd ..
+_pwd=`pwd`
+_home=$HOME
+
+### tmp directory
+#
+if [ ! -d "${_home}/tmp" ]; then
+	mkdir "${_home}/tmp"
+	chmod 775 "${_home}/tmp"
+fi
+
+### bin director
+#
+if [ ! -d "${_home}/bin" ]; then
+	mkdir "${_home}/bin"
+	chmod 775 "${_home}/bin"
+fi
+
+### src dot files
+#
+for (( i = 0; i < ${#_src_dot_files[@]}; i++ ))
+do
+  _src="${_pwd}/${_src_dot_files[$i]}"
+  _dest="${_home}/${_dest_dot_links[$i]}"
+
+	if [ -e "${_dest}" ]; then
+		if [ ! -h "${_dest}" ]; then
+			mv "${_dest}" "${_dest}.bak"
+			ln -s "${_src}" "${_dest}"
+		fi
+	else
+		if [ ! -h "${_dest}" ]; then
+			ln -s "${_src}" "${_dest}"
+		fi
+	fi
+done
+
+### src bin files
+#
+for (( i = 0; i < ${#_src_bin_files[@]}; i++ ))
+do
+  _src="${_pwd}/bin/${_src_bin_files[$i]}"
+  _dest="${_home}/bin/${_dest_bin_links[$i]}"
+	
+	if [ ! -x "${_src}" ]; then
+		chmod 775 "${_src}"
+	fi
+
+	if [ -e "${_dest}" ]; then
+		if [ ! -h "${_dest}" ]; then
+			mv "${_dest}" "${_dest}.bak"
+			ln -s "${_src}" "${_dest}"
+		fi
+	else
+		if [ ! -h "${_dest}" ]; then
+			ln -s "${_src}" "${_dest}"
+		fi
+	fi
+done
+

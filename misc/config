@@ -1,0 +1,20 @@
+host screamR
+	HostName 192.168.1.127
+	Port 8022
+	User caseman
+
+host ontheDL
+	HostName 192.168.1.102
+	Port 8022
+	User caseman
+
+host djslider
+	HostName 173.203.199.228
+	Port 22022
+	User caseman
+
+host vision
+	HostName 10.12.44.85
+	Port 22
+	User caseym
+

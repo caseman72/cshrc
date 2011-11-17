@@ -1,0 +1,27 @@
+#! /usr/bin/perl -w
+#
+use strict;
+use Readonly;
+use Win32::API;
+use vars
+qw/
+	$hWindow
+/;
+
+# Constants
+Readonly::Scalar my $PERL_LONG       => 0x0000;
+Readonly::Scalar my $MAX_STRING      => 0x00FF;
+Readonly::Scalar my $SW_MINIMIZE     => 0x0006;
+
+# API calls
+Win32::API->Import('user32',   'GetForegroundWindow',     '',      'I');
+Win32::API->Import('user32',   'ShowWindow',            'II',      'I');
+
+# When you want your pipes to be piping hot, set $| to nonzero
+$| = 1;
+
+# Top window {
+$hWindow = 0;
+$hWindow = GetForegroundWindow();
+ShowWindow($hWindow, $SW_MINIMIZE) unless(0 == $hWindow);
+

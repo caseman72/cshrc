@@ -1,0 +1,102 @@
+
+" Awesome Function
+"
+function! FunSqlCommand(x, bang, comment, copy, run)
+
+  normal! mx
+  if search('^--CWM--', 'ncw')
+    silent exec ':%s/^--CWM--//'
+  endif
+
+  if a:bang != 1 && a:x != 0
+    0
+    normal! my
+    normal! mz
+
+    " find bottom (z)
+    if search('WHERE TemplateID = '. a:x .';', 'sec')
+      exec 'normal! mz'
+
+      " find top (y)
+      if search('UPDATE Template SET', 'b')
+        exec 'normal! my'
+
+        if a:copy == 1 || a:run == 1
+          silent exec "normal! y'z"
+
+          " copy to clip
+          if a:copy == 1
+            call CygwinClip()
+          endif
+
+          " run
+          if a:run > 0
+            let currdir = escape(substitute(getcwd(),'\','/','ge'),"|[]*'\" #")
+            let initdir = currdir.'/.sql'
+            if !isdirectory(initdir)
+              call mkdir(initdir)
+            endif
+
+            let currfile = initdir.'/TemplateID_'. a:x .'.sql'
+
+            if a:run == 2
+
+              " let's run it
+              call writefile( split(substitute(@@, "\n", "\r\n", "g"), "\x0A", 1), l:currfile, 'b')
+              exec ':! /sql-template.bat ' . l:currfile
+
+            else
+              " create temp file (current copy in db)
+              let tempfile = currfile.'.tmp'
+              let xtemp = system('/sql-template.bat '. l:tempfile .' '. l:tempfile .' "SELECT TemplateBody FROM Template WHERE TemplateID = '. a:x .';" && sed -i "s/\x27/\x27\x27/g" '. l:tempfile ." &&  sed -i '$d' ". l:tempfile ." &&  sed -e :a -e '/^\\n*$/{$d;N;ba' -e '}' -i ". l:tempfile .' &&  sed -i "1s/^/UPDATE Template SET TemplateBody =\x0A\x27/" '. l:tempfile ." &&  sed -i '$s/$/\\x27\\x0AWHERE TemplateID = ". a:x .";/' ". l:tempfile )
+
+              if filereadable(currfile)
+                let diff = system('diff -uw ' . l:currfile .' '. l:tempfile)
+                if diff == ""
+                  " not different let's run it
+                  call writefile( split(substitute(@@, "\n", "\r\n", "g"), "\x0A", 1), l:currfile, 'b')
+                  exec ':! /sql-template.bat ' . l:currfile
+
+                else
+                  echo diff
+
+                endif
+
+              else
+                silent exec ":! mv ". l:tempfile .' '. l:currfile
+                echo "Created initial file. Re-run to update database"
+
+              endif
+
+              " drop temp file
+              silent exec ":! rm ". l:tempfile
+
+            endif
+
+          endif
+
+        endif
+
+        " comment
+        if a:comment == 1
+          silent exec ':%s/^/--CWM--/'
+          silent exec ":'y,'zs/^--CWM--//"
+        endif
+
+        exec "normal! 'y0"
+      endif
+
+    endif
+  endif
+
+  exec "normal! 'x0"
+endfunction
+
+command! -nargs=1 -bang SqlCom  call FunSqlCommand(<args>,0+<bang>0,1,0,0)
+command! -nargs=1 -bang SqlCopy call FunSqlCommand(<args>,0+<bang>0,0,1,0)
+command! -nargs=1 -bang SqlRun  call FunSqlCommand(<args>,0+<bang>0,0,1,1)
+command! -nargs=1 -bang SqlRunX call FunSqlCommand(<args>,0+<bang>0,0,1,2)
+
+" Testing line
+" WHERE TemplateID = 82;
+

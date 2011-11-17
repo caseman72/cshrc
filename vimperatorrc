@@ -1,0 +1,552 @@
+" Note cannot soft link to home directory
+
+hi Bell border: none; background-color: transparent;
+
+noremap b H
+noremap B L
+noremap <BS> <ESC>:stop<CR>
+noremap { :togs<CR>
+noremap | :showfb<CR>
+noremap } :togw<CR>
+noremap ,sc :togsc<CR>r
+noremap ,t :emenu Tools.Tamper Data<CR>:emenu Tools.Web Developer.Tools.Error Console<CR>
+noremap ,c :emenu Tools.Web Developer.Cookies.Clear Session Cookies<CR>:emenu Tools.Web Developer.Cookies.Delete Domain Cookies<CR>:emenu Tools.Web Developer.Cookies.Delete Path Cookies<CR>
+noremap ,r :emenu File.Work Offline<CR>:emenu File.Work Offline<CR>
+noremap ,h :emenu File.Work Offline<CR>:!hosts<CR>:emenu File.Work Offline<CR>
+noremap ,18 :open javascript:window.location.href = 'http://youtube.com/get_video?video_id=' + yt.config_.SWF_ARGS['video_id'] + "&fmt=18" + "&l=" + yt.config_.SWF_ARGS['l'] + "&sk=" + yt.config_.SWF_ARGS['sk'] + '&t=' + yt.config_.SWF_ARGS['t'];
+noremap ,22 :open javascript:window.location.href = 'http://youtube.com/get_video?video_id=' + yt.config_.SWF_ARGS['video_id'] + "&fmt=22" + "&l=" + yt.config_.SWF_ARGS['l'] + "&sk=" + yt.config_.SWF_ARGS['sk'] + '&t=' + yt.config_.SWF_ARGS['t'];
+noremap ,ed <A-d><S-Ins>
+noremap ss :stumble<CR>
+noremap $$ :<UP><CR>
+noremap <C-n> :tabduplicate<CR>
+noremap <C-t> :tabnew<CR>
+noremap <C-o> <A-f><A-o>
+
+" noremap P Y:tabopen <S-Ins><CR>
+" noremap <C-F> <C-v>
+" noremap <C-I> <C-v><C-U>
+" noremap <C-U> <C-v><C-u>
+" noremap <C-c> <C-v><C-c>
+" noremap <C-u> <C-v><C-u>
+" noremap <C-v> <C-v><C-v>
+
+" screen sort cuts
+noremap <C-b><C-b> <C-^>
+noremap <C-b>n gt
+noremap <C-b>N gT
+noremap <C-b>c :tabnew<CR>
+noremap <C-b>0 :1b<CR>
+noremap <C-b>1 :2b<CR>
+noremap <C-b>2 :3b<CR>
+noremap <C-b>3 :4b<CR>
+noremap <C-b>4 :5b<CR>
+noremap <C-b>5 :6b<CR>
+noremap <C-b>6 :7b<CR>
+noremap <C-b>7 :8b<CR>
+noremap <C-b>8 :9b<CR>
+noremap <C-b>9 :10b<CR>
+
+"inoremap <C-I> <C-v><C-U>
+"inoremap <C-a> <C-v><C-a>
+"inoremap <C-c> <C-v><C-c>
+"inoremap <C-u> <C-v><C-z>
+"inoremap <C-v> <C-v><C-v>
+"inoremap <C-x> <C-v><C-x>
+"inoremap <C-y> <C-v><C-y>
+"inoremap <C-z> <C-v><C-z>
+
+" set t_vb=
+set titlestring="Mozilla Firefox"
+set visualbell
+set verbose=0
+set focuscontent
+
+set! browser.urlbar.clickSelectsAll=false
+set! browser.tabs.insertRelatedAfterCurrent=false
+set editor=C:/cygwin/vim.bat
+" set guioptions=
+" set showtabline=2
+set nosb
+set noac
+set complete=bl
+
+
+" autocmd PageLoad (.*) :js saveCurrentPage(buffer.URL)
+" autocmd LocationChange (.*) :js saveCurrentPage(buffer.URL)
+
+autocmd PageLoad "^[^ ]" :js content.wrappedJSObject.alert=function(msg){liberator.echoerr(msg)}; window.alert=function(msg){liberator.echoerr(msg)};
+autocmd LocationChange "^[^ ]" :js content.wrappedJSObject.alert=function(msg){liberator.echoerr(msg)}; window.alert=function(msg){liberator.echoerr(msg)};
+
+" Pass thru sites
+autocmd PageLoad .* :js modes.passAllKeys = /google\.com\/(reader|mail|a)\//.test(buffer.URL)
+autocmd LocationChange .* :js modes.passAllKeys = /google\.com\/(reader|mail|a)\//.test(buffer.URL)
+
+command! resrc :source "~/.vimperatorrc"
+
+javascript <<EOS
+
+  function autoCopy(e) {
+    if(e && e.target && !e.target.textbox &&
+        !e.target.toString().match(/SelectElement|OptionElement|InputElement|TextAreaElement|object XUL/i)) {
+      let sel = (window.content.getSelection()+"").replace(/^(\s|\u00A0)+|(\s|\u00A0)+$/g, "");
+      if (sel) {
+        util.copyToClipboard(sel, true);
+      }
+    }
+  }
+  // window.addEventListener("mouseup", autoCopy, false);
+
+  function saveCurrentPage(url) {
+    if (services.get("privateBrowsing").privateBrowsingEnabled) {
+      url = "about:private";
+    }
+
+    // bugtracker store
+    if(url.match(/searchrequest[-]printable.*currentUser/)) {
+      addjQuery();
+      var text = $("#issuetable").find(".issuekey,.summary").text();
+      let issues = storage.newArray("current-issues", {store: true, privateData: false});
+      issues.truncate(0);
+      issues.push(text.replace(/[^ -~]+/g,"").replace(/\s+/g," ").replace(/^\s+|\s+$/g, ""));
+    }
+
+    // current page
+    let store = storage.newArray("current-page", {store: true, privateData: false});
+    if (store.get(0) == url) return;
+    store.truncate(0);
+    store.push(url);
+  }
+
+  setTimeout(function() {
+    var cmdline = document.getElementById("liberator-commandline-command");
+    cmdline.addEventListener( "focus", function(e) { this.style.backgroundColor = (e.type == "focus" ? "#FFAA00" : ""); }, false );
+    cmdline.addEventListener( "blur", function(e) { this.style.backgroundColor = (e.type == "focus" ? "#FFAA00" : ""); }, false );
+    if( window.name != '') {
+      alert( "window.name = " + window.name );
+    }
+
+    var feedPanel = document.createElement("statusbarpanel");
+    feedPanel.setAttribute("id", "feed-panel-clone");
+    feedPanel.appendChild(document.getElementById("feed-button"));
+    feedPanel.firstChild.setAttribute("style", "padding: 0; max-height: 16px;");
+    document.getElementById("status-bar").insertBefore(feedPanel,document.getElementById("security-button"));
+  }, 300);
+
+  commands.add(["showFirebug", "showfb"], "Show firebug panel", function() {
+    Firebug.showBar(true);
+  });
+
+  function toggle_element (name) {
+    document.getElementById(name).collapsed ^= 1;
+  }
+  commands.add(["togwebdev", "togw"], "Toggle visibility of Web Developer toolbar", function() {
+    toggle_element("webdeveloper-toolbar") 
+  });
+
+  commands.add(["togstumble", "togs"], "Toggle visibility of StumbleUpon toolbar", function() {
+    toggle_element("stumbleupon")
+  });
+
+  commands.add(["togproxy", "togp"], "Toggle visibility of Proxy  toolbar", function() {
+    toggle_element("proxy-toolbar")
+  });
+
+  commands.add(["thumbup"], "Add to favourites, show more like this \(StumbleUpon\)", function() {
+    if( StumbleGlobals && typeof(StumbleGlobals.rate) == "function") {
+      StumbleGlobals.rate(1, false, false, false, 0);
+    }
+    else if( typeof(su_rate) == "function") {
+      su_rate(1, 0, 0, 0);
+    }
+  });
+
+  commands.add(["thumbdown"], "No more like this \(StumbleUpon\)", function() {
+    if( StumbleGlobals && typeof(StumbleGlobals.rate) == "function") {
+      StumbleGlobals.rate(0, false, false, false, 0);
+    }
+    else if( typeof(su_rate) == "function") {
+      su_rate(0, 0, 0, 0);
+    }
+  });
+
+  commands.add(["thumbno"], "Remove StumbleUpon rating", function() {
+    if( StumbleGlobals && typeof(StumbleGlobals.unrate) == "function") {
+      StumbleGlobals.unrate();
+    }
+    else if( typeof(su_unrate) == "function") {
+      su_unrate();
+    }
+  });
+
+  commands.add(["stumble"], "StumbleUpon", function() {
+    if(StumbleGlobals && typeof(StumbleGlobals.stumble) == "function") {
+      StumbleGlobals.stumble(0);
+    }
+    else if(typeof( stumble ) == "function") {
+      stumble(0);
+    }
+  });
+
+  commands.add(["email"], "Email Page", function(email) {
+    if(StumbleGlobals && typeof(StumbleGlobals.sendto) == "function") {
+      StumbleGlobals.sendto([{send_type: "mail", target: email}]);
+    }
+    else if(typeof( su_mailit ) == "function") {
+      su_mailit(email.string)
+    }
+  });
+
+  commands.add(["jquery", "jq"], "Add jQuery", function() {
+    addjQuery()
+  });
+
+  commands.add(["rgSetup", "rg"], "Setup RG Tests", function() {
+    addjQuery();
+    io.source("C:/cygwin/home/CaseyM/.gitclones/cshrc/unitTests.jsx", false);
+  });
+
+  commands.add(["procs"], "Setup Procs", function() {
+    addjQuery();
+    io.source("C:/cygwin/home/caseman/.gitclones/cshrc/procs.json", false);
+  });
+
+  function addjQuery() {
+    userContext.__defineGetter__("$", function () {
+      if (!('jQuery' in content.wrappedJSObject))
+      {
+        head = util.evaluateXPath('//head').snapshotItem(0);
+        head.appendChild(util.xmlToDom(<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>, content.document));
+        head.appendChild(util.xmlToDom(<script type="text/javascript">jQuery.noConflict();</script>, content.document));
+      }
+      while (!('jQuery' in content.wrappedJSObject))
+        liberator.threadYield(true, true);
+      return content.wrappedJSObject.jQuery;
+    });
+  }
+
+  function addMaps() {
+    head = util.evaluateXPath('//head').snapshotItem(0);
+    head.appendChild(util.xmlToDom(<script type="text/javascript" src="http://www.manion.org/static/map.polys.js"></script>, content.document));
+
+    addjQuery();
+    pricePerSqFt( $("#ifrmClientPortal").contents().find("#WebTab_Frame0").contents() );
+  }
+
+  function eRandom() {
+    var reset = arguments ? arguments[0] : true;
+    var count=0;
+    $("input[type=checkbox]").each(function(i,elem) {
+      if(elem.checked) {
+        if(reset) {
+          //elem.checked = false;
+          $(elem).click();
+        }
+        else {
+          count++;
+        }
+      }
+    });
+    $("input[type=checkbox]").each(function(i,elem) {
+      if(count>2) return;
+      if(1 == Math.round(Math.random()*200/30)) {
+        //elem.checked = true;
+        $(elem).click();
+        count++;
+      }
+    });
+    if(count<3) eRandom(false);
+  }
+  function demonoid() {
+    addjQuery();
+    $(".pad9px_right").remove();
+    $(".user_donation_box").remove();
+    $("iframe").remove();
+    $("td[colspan='10']:contains('AdBrite')").remove();
+    $("td[colspan='10']:contains('Sponsored')").remove();
+
+    setTimeout(function(){$("iframe").remove()},500);
+
+    var loc = "" + content.window.location.href;
+    if (loc.match(/query=[^&]+/)){ return }
+    $("td[colspan='9']").parent("tr").each(function(i,elem) {
+      var tr = $(elem);
+      var trn = $(elem).next("tr").children("td");
+      var seed = parseInt(trn.eq(6).text().replace(/[^0-9]/,""));
+      var peer = parseInt(trn.eq(7).text().replace(/[^0-9]/,""));
+
+      var goodSeed = 10;
+      var okSeed = 5;
+      if (loc.match(/category=1[&]/)) {
+        goodSeed = 100;
+        okSeed = 10;
+      }
+
+      if (goodSeed>seed || (okSeed>seed && seed>peer)) {
+        tr.hide();
+        trn.hide();
+      }
+    });
+  }
+  function tpb() {
+    addjQuery();
+    $("#adbrite-banner").fadeOut(250);
+    $("#foot").fadeOut(250);
+    $("#TPBlogo").fadeOut(250);
+    $("iframe").fadeOut(250);
+    $(".ads").fadeOut(250);
+    $("img[src=http://static.thepiratebay.org/img/vio.gif]").parents("div").eq(0).fadeOut(250);
+    var loc = "" + content.window.location.href;
+    if(loc.match(/search\/.+/)){ return }
+    if(loc.match(/recent$/)){ return }
+    $("tr").each(function(i, elem){
+      var cols = $(elem).children("td");
+      if( cols.length != 7 )return;
+      if( !cols.eq(0).hasClass("vertTh") ) return;
+
+      var seed = cols.eq(5).text().replace(/[^0-9]/,"");
+      var peer = cols.eq(6).text().replace(/[^0-9]/,"");
+      if (100>seed || (10>seed && seed>peer)) {
+        $(elem).hide();
+      }
+    });
+  }
+  function bugs() {
+    addjQuery();
+    var base = "/sr/jira.issueviews:searchrequest-printable/temp/SearchRequest.html?jqlQuery=project+%3D+SOS+AND+(assignee+%3D+currentUser()+OR+reporter+%3D+currentUser())+AND+status+",
+        defr = "!%3D+%22Deferred %22&amp;tempMax=1000",
+        curr = "%3D+Open&amp;tempMax=1000",
+        anchor = ['<a class="lnk" href="', base, defr, '">Casey</a>&nbsp;<a class="lnk" href="', base, curr, '">Manion</a>'].join("");
+    $("#header-details-user")
+      .find("a:contains(Casey Manion)").replaceWith(anchor);
+
+    var loc = "" + content.window.location.href;
+    if( loc.indexOf("searchrequest-printable") > 0 ) {
+      $("table:first")
+        .find("tr:first").append(["<td width='10%'>", anchor, "</td>"].join("")).end()
+        .find("tr:last").find("td").attr("colspan", "2");
+    }
+
+    /*
+    .click(function(e) { alert("here"); return false; });
+    $("a[href$='diff_format=h']").each(function(i,elem){
+      var href = $(elem).attr("href").replace(/diff_format=h$/, "diff_format=u");
+      $(elem).attr("href", href).attr("target", "_blank");
+    });
+    */
+  }
+  function jumps() {
+    addjQuery();
+    $("a[href^='/r/?']").each(function(i, elem){
+      var href = $(elem).attr("href").replace(/\/r\/\?/, "");
+      $(elem).attr("href", href).attr("target", "_blank");
+    });
+  }
+  function mapredir() {
+    var loc = "" + content.window.location.href;
+    if(! loc.match(/[&]q[=]http/)) return;
+    loc = unescape(loc.replace(/^.*?q[=]/, ""));
+    content.window.location = loc;
+  }
+  function woot() {
+    addjQuery();
+    $("div.advertisement,div.module:contains(ADVERTISEMENT),div.module:contains(Advertisement)").remove();
+    setTimeout(function() {
+      $("div.advertisement,div.module:contains(ADVERTISEMENT),div.module:contains(Advertisement)").remove();
+    }, 1000);
+  }
+  function mapmyrun() {
+    addjQuery();
+    setTimeout(function() {
+      $("iframe").each(function(i, elem) {
+        var url = $(elem).attr("src");
+        if(url.match(/\.mapmyfitness\.com/)){ 
+          content.window.location = url;
+        }
+      });
+    }, 200);
+  }
+  function mapmyfit() {
+    addjQuery();
+    setTimeout(function() {
+      $(".ui-dialog").remove();
+      $(".map_media_banner_ad").remove();
+      $("iframe[id^='ad_']").remove();
+    }, 20000);
+  }
+
+  function liveStrong() {
+    addjQuery();
+    $("a:eq(0)", "div.main_content_bottom").remove();
+    $("div:contains(advertisement)", "div.module").remove();
+    $("iframe").remove();
+    $("#postFoodToFacebook").parent().remove();
+    setTimeout(function(){
+      $("div.main_content").wrap('<div class="blocker" style="width:100%; z-index: 1; cursor: default;"/>').removeClass("main_content").css({"cursor": "default","z-index":"2","width":"auto"}).unbind();
+      $("div.blocker").click(function(){return false}).hover(function(elem){$(elem).css("coursor","default")},function(elem){$(elem).css("coursor","default")});
+      $("div.frame").css({"cursor": "default","z-index":"3"}).find("a,input[type=submit]").css({"cursor":"pointer","z-index":"4"}).each(function(i, elem){
+        $(elem).click(function() {
+          var href = $(elem).attr("href") || "";
+          if (href != "" && !href.match(/[#]/)) {
+              window.content.location = href + (href.match(/\/$/) ? "" : "/");
+          }
+          else {
+            var type = $(elem).attr("type") || "";
+            if (type == "submit") {
+                $(elem).parents("form").submit();
+            }
+          }
+        });
+      });
+      $(window.content.document).css({"cursor": "default","z-index":"-1"}).unbind();
+      $("body").css({"cursor": "default","z-index":"-1"}).unbind();
+      window.content.document.onclick = void(0);
+      window.content.document.onmousemove = void(0);
+    }, 500);
+  }
+  function removeModal() {
+    addjQuery();
+    setInterval(function(){$("#modal_container,#modal_overlay").remove();}, 500 );
+  }
+
+  function pricePerSqFt(dom) {
+    var trs = dom.find("tr[id$='_trRow1']");
+    for(var i = 1, n=trs.length; i<n; i++) {
+      var tr = $(trs[i]), td = tr.find("td:eq(3)"),
+        p = parseInt(td.text().replace(/[^0-9]/g, "")),
+        f = parseInt(tr.find("td:eq(6)").text().replace(/[^0-9]/g, ""));
+
+      td.html( td.html() + '<span class="cGrayText">&nbsp;&nbsp;&nbsp;(' + (f ? "$" + parseInt(p/f + 0.5) + " / sq.ft." : "") + ") </span>" );
+    }
+  }
+
+  function lsAddItem(id, date, servings, when) {
+    $.ajax({
+      async: false,
+      url:"http://www.livestrong.com/myplate/foods/track/?id="+id+"&date="+date+"&servings="+servings+"&serving_size=serving&label=&when="+when
+    });
+  }
+  function lsAdd(food) {
+    var w = arguments[1] ? (arguments[1]+"").replace("/ /g", "+") : "lunch";
+
+    var d = new Date();
+        d = arguments[2] ? arguments[2] :
+      (d.getFullYear() +"-"+ ((101+d.getMonth())+"").substring(1) +"-"+ d.getDate());
+
+    switch(food) {
+      case("breakfast"):
+        lsAddItem(93872, d, 1, food);
+        lsAddItem(114694, d, 0.5, food);
+        lsAddItem(612794, d, 0.5, food);
+        lsAddItem(574000, d, 1, food);
+        lsAddItem(279577, d, 1, food);
+        lsAddItem(257626, d, 0.5, food);
+        lsAddItem(97461, d, 1, food);
+        lsAddItem(321625, d, 1, food);
+        lsAddItem(329315, d, 1, food);
+        break;
+
+      case("chuns"):
+        lsAddItem(418811, d, 1, w);
+        lsAddItem(413094, d, 1, w);
+        lsAddItem(288324, d, 1, w);
+        lsAddItem(574000, d, 1, w);
+        lsAddItem(530503, d, 1, w);
+        lsAddItem(361287, d, 1, w);
+        break;
+
+      case("tacos"):
+        lsAddItem(265217, d, 1, w);
+        lsAddItem(58058, d, 1, w);
+        lsAddItem(58093, d, 1, w);
+        lsAddItem(58053, d, 1, w);
+        lsAddItem(58070, d, 1, w);
+        lsAddItem(109383, d, 1, w);
+        break;
+
+      case("goji"):
+        lsAddItem(265395, d, 0.25, w);
+        lsAddItem(798307, d, 0.25, w);
+        lsAddItem(392204, d, 0.25, w);
+        lsAddItem(342729, d, 0.25, w);
+        lsAddItem(610549, d, 0.25, w);
+        lsAddItem(627874, d, 0.25, w);
+        lsAddItem(94758, d, 1, w);
+        break;
+
+      case("flax"):
+        lsAddItem(329315, d, 2, "evening+snack");
+        break;
+    }
+
+    /* reload tab */
+    tabs.reload(getBrowser().mCurrentTab, false);
+  }
+
+  function msLogin() {
+    content.document.getElementById("user").value = "msguest331";
+    content.document.getElementById("password").value = "Te4tfd6d";
+  }
+
+  function msSelect() {
+    var loc = "" + content.window.location.href;
+    if(loc.match(/^https:\/\/adcenter.microsoft.com\/(?:Default.aspx)?/)) {
+      addjQuery();
+      $("#txtUsername").replaceWith(
+        [
+          '<select id="txtUsername" style="width: 194px;">',
+          '<option value="">[Select Account]</option>',
+          '<optgroup label="User Accounts">',
+          '<option value="classifiedads">microsoft</option>',
+          '<option value="bluemoonventures">microsoft-old</option>',
+          '<option value="cadssemmsn">microsoft-ysem</option>',
+          '</optgroup><optgroup label="Api Accounts">',
+          '<option value="mscadsapi">microsoft-api</option>',
+          '<option value="msbmvapi">microsoft-old-api</option>',
+          '<option value="msysemapi">microsoft-ysem-api</option>',
+          '</optgroup></select>'
+        ].join("")
+      );
+      $("#txtUsername").change(function() {
+        var usr = $("#txtUsername").val();
+        pwd = {
+          "classifiedads" : "bmv3Y1m",
+          "mscadsapi" : "bmvB33r",
+          "bluemoonventures" : "bmv3Y1m",
+          "msbmvapi" : "bmvB33r",
+          "cadssemmsn" : "bmv3Y1m",
+          "msysemapi" : "bmvB33r"
+        };
+        $("#txtPassword").val( usr ? pwd[usr] : "" );
+      });
+    }
+  }
+
+  function addChan(arrIds) {
+    addjQuery();
+
+    for(var i = 0,n = arrIds.length; i<n; i++) {
+      var u = "https://ads.indeed.com/jobroll/xmlfeed?newChannel="+ arrIds[i] + "&channel=_new";
+      $.ajax({
+        url: u,
+        async: false
+      });
+    }
+  }
+
+EOS
+
+autocmd DOMLoad woot\.com :js woot()
+autocmd DOMLoad thepiratebay\.org :js tpb()
+autocmd DOMLoad demonoid\.com :js demonoid()
+autocmd DOMLoad www\.mapmyrun\.com :js mapmyfit()
+autocmd DOMLoad ws\.mapmyfitness\.com :js mapmyfit()
+autocmd DOMLoad jira\.bluemooncorp\.com :js bugs()
+autocmd DOMLoad www\.newzbin\.com :js jumps()
+autocmd DOMLoad maps\.google\.com :js mapredir()
+autocmd DOMLoad www\.livestrong\.com/myplate :js liveStrong()
+autocmd DOMLoad bendoregonrealestate\.com :js removeModal()
+
+autocmd DOMLoad msftguest\.microsoft\.com :js msLogin()
+autocmd DOMLoad adcenter\.microsoft\.com :js msSelect()
+autocmd DOMLoad searchlax\.rapmls\.com :js setTimeout(){addMaps, 1000}
+

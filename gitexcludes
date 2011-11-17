@@ -1,0 +1,4 @@
+.rcs
+.svn
+*.swp
+.gitignore

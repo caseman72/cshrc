@@ -1,0 +1,15 @@
+#!/bin/tcsh
+
+set _dash=`date -d "yesterday" "+%Y-%m-%d"`
+set _month=`date -d "yesterday" "+%Y-%m"`
+
+set _dir="$HOME/archive/history"
+
+if (! -d $_dir) then
+  mkdir -p $_dir
+endif
+
+set _file="$_dir/hf.$_dash"
+history > $_file
+
+

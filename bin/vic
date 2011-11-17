@@ -1,0 +1,457 @@
+#!/usr/bin/perl -w
+#
+#    vic
+#
+#    Edit files with RCS
+#    8 May 2000
+#
+#    Based on ideas from a program of the same name by
+#        Stephen W. Fulling
+#
+#    The source and documentation for this program can be found at:
+#        http://mordred.ao.com/vic/
+#
+#    Dave Regan
+#    regan@ao.com
+#
+#    ---------------------------------------------------------------------
+#
+#    Modified to hide the default 'RCS' directory
+#      by naming it '.rcs'
+#    7 Nov 2005
+#
+#    Modified to use generic values for prompt
+#    26 Jan 2009
+#
+#    Casey Manion
+#    casey@manion.com
+#
+#    ---------------------------------------------------------------------
+#
+use strict;
+use File::Path;
+
+###
+#     Configuration
+###
+my $RCSRoot     = '/usr/bin';
+my $RCSDir      = '.rcs';
+my $RCSCheckOut = "$RCSRoot/co -l -zLT";
+my $RCSCheckIn  = "$RCSRoot/ci -u -zLT -m\"-\" ";
+my $RCSLock     = "$RCSRoot/rcs -l -q -zLT";
+my $RCSUnlock   = "$RCSRoot/rcs -u -q -zLT";
+my $RCSDiff     = "$RCSRoot/rcsdiff -u -zLT";
+my $RLog        = "$RCSRoot/rlog -zLT";
+my $TmpFile     = $ENV{'TMPATH'} ? $ENV{'TMPATH'}."$$.vic" : "/tmp/$$.vic";
+my $Editor      = $ENV{'VISUAL'} || $ENV{'EDITOR'} || 'vi';
+my $HomeDir     = $ENV{'HOME'};
+my $Version     = 'vic v0.06 regan@ao.com | v0.06.4 casey@manion.com';
+my $PHPCheck    = '';
+my $PyCheck     = '';
+my $PerlCheck   = '';
+my $JSCheck   = '';
+
+
+###   Main program
+# ### Piping hot
+# #
+  $| = 1;
+
+  if ($#ARGV < 2)
+  {
+    ### Perl syntax checker
+    #
+    if ($ARGV[0] eq '-perl' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.pl$/))
+    {
+      shift(@ARGV);
+      $PerlCheck = "perl";
+    }
+
+    ### PHP syntax checker
+    #
+    elsif ($ARGV[0] eq '-php' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.(php|htm|html)$/))
+    {
+      shift(@ARGV);
+      if(-x "$HomeDir/bin/php")
+      {
+        $PHPCheck = "$HomeDir/bin/php";
+      }
+      $PHPCheck = "php";
+    }
+    elsif( $ARGV[0] eq '-php5' )
+    {
+      shift(@ARGV);
+      if(-x "$HomeDir/bin/php5")
+      {
+        $PHPCheck = "$HomeDir/bin/php5";
+      }
+    }
+    elsif( $ARGV[0] eq '-php4' )
+    {
+      shift(@ARGV);
+      if(-x "$HomeDir/bin/php4")
+      {
+        $PHPCheck = "$HomeDir/bin/php4";
+      }
+    }
+    elsif ($ARGV[0] eq '-js' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.js$/))
+    {
+      shift(@ARGV);
+      if(-e "$HomeDir/bin/compiler.jar")
+      {
+        $JSCheck = "java -jar $HomeDir/bin/compiler.jar";
+      }
+    }
+
+    ### Python syntax checker
+    #
+    elsif ($ARGV[0] eq '-py' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.py$/))
+    {
+      shift(@ARGV);
+      if(-x "$HomeDir/bin/py")
+      {
+        $PyCheck = "$HomeDir/bin/py";
+      }
+      $PyCheck = "python"
+    }
+
+  }
+
+  ### Not found
+  #
+  if ($ARGV[0] =~ /^[-]p[cyh]?/)
+  {
+    shift(@ARGV);
+  }
+
+  ### Arguments
+  #
+  if ($#ARGV < 0)
+  {
+    print STDERR "Usage: vic file1 ...\n";
+    exit 1;
+  }
+
+  ### Do all files
+  #
+  my($filename);
+  for $filename (@ARGV)
+  {
+    EditFile($filename);
+  }
+#
+  exit 0;
+###
+
+
+###
+##\/  EditFile
+# /\    Do the work necessary to edit a file.
+sub EditFile
+{
+  my($fname) = @_;
+  my($ans, $basename, $dirname, $path, $lname, $ret);
+  my($dev, $ino, $mode, $nlink, $uid, $gid, $glob);
+  my($BugURL,$StartTime) = ('', 0);
+
+  chomp($path = `pwd`);
+  chomp($dirname = `dirname "$fname"`);
+  chomp($basename = `basename "$fname"`);
+
+  # If the file is a symbolic link, then we really want to
+  # edit the real file to keep a set of appropriate files.
+  if (-l $fname)
+  {
+    print "$fname is a symbolic link to ";
+    $fname = readlink($fname);
+    print "$fname.  Do you want to edit that file? ";
+    $ans = <STDIN>;
+    return if ($ans !~ /y/i);
+  }
+
+  # Ensure that the file exists.
+  if (! -f $fname)
+  {
+    # The file doesn't exist.  See if we can create it.
+    if (!open(FILE, ">", $fname))
+    {
+      print "Cannot create $fname: $!.  Sorry.\n";
+      return;
+    }
+    close FILE;
+    system("chmod a-w \"$fname\"");
+  }
+
+  # If the file has hard links, we don't know which one is under
+  # RCS.  This will get weird fast.  Don't do that.
+  if ((stat($fname))[3] != 1)
+  {
+    print "There are ", (stat($fname))[3], " links to this file.\n";
+    print "It is best to delete all names except one before continuing.\n";
+    return;
+  }
+
+  # do not use current directory for rcs files
+  #
+  if( ( ($path =~ /\.xcs\//) || ($path =~ /\.xcs$/) ) && ($path !~ /^$HomeDir\/$RCSDir\//)) {
+    $glob = "$dirname/[_]1[a-zA-Z0-9]*";
+    $dirname = "$HomeDir/$RCSDir" . $path;
+
+    # Ensure that the RCS directory exists
+    if (! -d "$dirname")
+    {
+      system("mkdir -m 0775 -p \"$dirname\"");
+      if (! -d "$dirname")
+      {
+        print "Permission denied creating directoryx $dirname: $!\n";
+        return;
+      }
+    }
+  }
+
+  # Ensure that the directory is writable.
+  if (!open(FILE, ">", "$dirname/test.$$.vic"))
+  {
+    # We cannot write in the directory,
+    # so it is pointless to edit the file.
+    print "Filename is $dirname/test.$$.vic\n";
+    print "Permission denied for writing to $dirname: $!";
+    return;
+  }
+  close FILE;
+  unlink("$dirname/test.$$.vic");
+
+  # Ensure that the RCS directory exists
+  if (! -d "$dirname/$RCSDir")
+  {
+    if (!mkdir("$dirname/$RCSDir", 0775))
+    {
+      print "Permission denied creating directory $dirname/$RCSDir: $!\n";
+      return;
+    }
+  }
+
+  # Ensure that you can write into the RCS directory
+  if (!open(FILE, ">", "$dirname/$RCSDir/test.$$.vic"))
+  {
+    print "Permission denied to writing to $dirname/$RCSDir: $!\n";
+    return;
+  }
+  close FILE;
+  unlink("$dirname/$RCSDir/test.$$.vic");
+
+  # Get ownership and file modes from the original file.
+  ($dev, $ino, $mode, $nlink, $uid, $gid) = stat($fname);
+
+  # If there is no RCS entry, make one.
+  if (! -f "$dirname/$RCSDir/$basename,v")
+  {
+    print "\nNOTE: $fname has never been checked into RCS,";
+    print "\nchecking in via '$RCSCheckIn'\n\n";
+    system("$RCSCheckIn \"$fname\" \"$dirname/$RCSDir/$basename,v\"");
+  }
+
+  # See if the file is being edited by someone else.
+  $lname = GetLockersName($fname);
+  if ($lname ne '')
+  {
+    print "ERROR: \"$fname\" locked (checked out)( by: $lname\n";
+    print "       You can force an unlock via 'rcs -u \"$fname\", however\n";
+    print "       you BETTER be sure they're not really editing it.\n";
+    print "\n";
+    print "Do you want to unlock the file? ";
+    $ans = <STDIN>;
+    return if ($ans !~ /y/i);
+
+    system("$RCSUnlock \"$fname\" \"$dirname/$RCSDir/$basename,v\"");
+  }
+
+  # Run rcsdiff to see if somebody has changed the file without
+  # checking it in.  If changes are found, allow the operator
+  # to check it in, quit, or ignore.
+  $ret = system("$RCSDiff \"$fname\" \"$dirname/$RCSDir/$basename,v\" >$TmpFile 2>/dev/null");
+  if ($ret)
+  {
+    print "\n";
+    print "ERROR: File has been changed since last check in.  This means\n";
+    print "       someone has edited the file \"$fname\" \n";
+    print "       without checking in their changes to RCS.\n";
+    print "\n";
+    print "       Here are the changes:\n";
+    system("more $TmpFile");
+    unlink($TmpFile);
+    print "\n";
+    print "  '<' = RCS has information that the file does not.\n";
+    print "  '>' = The file has information that RCS does not.\n";
+    print "\n";
+    print "Here are your options (in the order you should consider):\n";
+    print "     1. Check the changes into RCS (syncronize file with RCS)\n";
+    print "     2. Exit and go get a beer\n";
+    print "     3. Ignore the changes and continue - DANGEROUS OPTION!\n";
+    print "---> ";
+    $ans = <STDIN>;
+    if ($ans =~ /1/)
+    {
+      print "Checking in $fname to RCS\n";
+      system("chmod a-w \"$fname\"");
+
+#     ($dev, $ino, $mode, $nlink, $uid, $gid) = stat($fname);
+
+      system("$RCSLock \"$fname\" \"$dirname/$RCSDir/$basename,v\"");
+      system("$RCSCheckIn \"$fname\" \"$dirname/$RCSDir/$basename,v\"");
+    }
+    elsif ($ans =~ /3/)
+    {
+      print "Ignoring RCS changes for file $fname\n";
+    }
+    else
+    {
+      print "No changes made\n";
+      return;
+    }
+  }
+
+  # time tracker
+  if (-f "$HomeDir/.tt/timetrack.log") {
+
+    my($picklistFile, @picklist, $c) = ("$HomeDir/vimperator/info/default/current-issues", (), 0);
+    if(-f $picklistFile && open(FILE, $picklistFile)) {
+      while(<FILE>) {
+        chomp;
+        s/\s+/ /go;      # single white space
+        s/\\\\"/\/"/go;  # ex - http://www.site.com\\"
+        s/\\"/%22/go;    # replace quotes with hex
+        s/^\["|"\]$//go; # remove array notation
+
+        s/(VIS-[0-9]+) (?:VIS-[0-9]+ )?/\n$1 - /g;
+        s/^\n+/CWM-000 - Default\n/go;
+
+        @picklist = split(/\n/);
+      }
+      close(FILE);
+    }
+
+    print "Time Tracker Installed. Enter the bug URL:\n";
+    foreach my $pick (@picklist) {
+      $c++;print "     $c. $pick\n";
+    }
+    print "---> ";
+    $ans = <STDIN>;
+    if ($ans !~ /^\.$/) {
+      # from pick list
+      if($ans =~ /^\d+$/ && defined($picklist[int($ans)-1])) {
+        $ans = $picklist[int($ans)-1];
+        $ans =~ s/^((?:CWM|VIS)-[0-9]+) .*$/$1/;
+        $ans = "http://bugtracker/browse/$ans" if($ans =~ /^VIS/);
+      }
+      chomp($BugURL = $ans);
+      my $ts = `date "+%Y-%m-%d %H:%M:%S"`;
+      chomp($ts);
+      $StartTime = time;
+      system("echo \"$ts\t>\t$BugURL\" >> $HomeDir/.tt/timetrack.log");
+    }
+  }
+
+  # Finally, do the work.  The rlogs are done because it's the only
+  # I could monitor whether the user answered 'y' or 'n' to the rcs
+  # 'co' and 'ci' questions.
+  system("chmod a-w \"$fname\"");
+  system("$RCSCheckOut \"$fname\" \"$dirname/$RCSDir/$basename,v\"");
+  $lname = GetLockersName($fname);
+  if ($lname eq '')
+  {
+    print "Could not lock $fname.\n";
+    return;
+  }
+
+  # Tilde path
+  my $homepath = $path;
+  $homepath =~ s/^$HomeDir/\~/;
+
+  # Title bar
+  print("\033]2; ". $ENV{'USER'} .'@'. $ENV{'HOST'} ."  vi:[$homepath/$basename]\007");
+
+  system("chmod 0664 \"$fname\"");
+  system("$Editor \"$fname\"");
+  system("$RCSCheckIn \"$fname\" \"$dirname/$RCSDir/$basename,v\"");
+  $lname = GetLockersName($fname);
+  if ($lname ne '')
+  {
+    system("$RCSUnlock \"$fname\" \"$dirname/$RCSDir/$basename,v\"");
+    print "File $fname has been unlocked.\n";
+  }
+
+  # After edits, change file ownership and mode back to what it was.
+  chmod($mode, $fname);
+  chown($uid, $gid, $fname);
+
+  # Perl
+  if ($PerlCheck)
+  {
+    system("$PerlCheck -c \"$fname\"");
+  }
+
+  # PHP
+  elsif ($PHPCheck)
+  {
+    system("$PHPCheck -d error_reporting=32767 -l \"$fname\"");
+  }
+
+  # Javascript
+  elsif ($JSCheck)
+  {
+    system("$JSCheck --js \"$fname\" > /dev/null");
+  }
+
+  # Python
+  elsif ($PyCheck)
+  {
+    system("$PyCheck -m py_compile \"$fname\"");
+  }
+
+  # time tracker
+  if ($BugURL) {
+    my $ts = `date "+%Y-%m-%d %H:%M:%S"`;
+    chomp($ts);
+    my $Duration = time - $StartTime;
+    $Duration = 0 if($Duration < 0);
+
+    system("echo \"$ts\t<\t$BugURL\t$Duration\" >> $HomeDir/.tt/timetrack.log");
+    print("Logged: $BugURL\t$Duration (sec)\n");
+  }
+
+  # Only in webdav situations
+  if (defined($glob)) {
+    my @files = glob($glob);
+    foreach (@files) {
+      next if(-f \"$_");
+      print("mv \"$_\" /tmp/\n");
+      system("mv \"$_\" /tmp/");
+    }
+  }
+
+}
+
+###
+##\/  GetLockersName
+# /\    Get the name of the person who holds the lock.
+sub GetLockersName
+{
+  my($fname) = @_;
+  my($path, $basename, $lname, $dirname);
+
+  chomp($path = `pwd`);
+  chomp($dirname = `dirname \"$fname\"`);
+  chomp($basename = `basename \"$fname\"`);
+
+  if( ( ($path =~ /\.xcs\//) || ($path =~ /\.xcs$/) ) && ($path !~ /^$HomeDir\/$RCSDir\//)) {
+    $dirname = "$HomeDir/$RCSDir" . $path;
+  }
+
+  $lname = `$RLog \"$fname\" \"$dirname/$RCSDir/$basename,v\" | grep "locked by:"`;
+  chomp $lname;
+  $lname =~ s/.*locked by: //;
+  $lname =~ s/;.*//;
+  return $lname;
+}
+

@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+
+# usuage
+if [[ -z $1 || -z $2 ]]; then
+	echo "$0 <src file> <dest file>";
+	exit 1;
+fi
+
+# file not found
+if [[ ! -f $1 && ! -d $1 ]]; then
+	echo "$1 not found";
+	exit 1;
+fi
+
+# file not found
+if [[ ! -f $2 && ! -d $2 ]]; then
+	echo "$2 not found";
+	exit 1;
+fi
+
+# set these here
+_src=$1;
+_dest=$2;
+
+# do this (at least)
+chown --reference "$_src" "$_dest";
+chmod --reference "$_src" "$_dest";
+
+# facl (cygwin)
+`which getfacl >& /dev/null`; _getfacl=$?;
+`which setfacl >& /dev/null`; _setfacl=$?;
+
+if [[ $_getfacl == 0 && $_setfacl == 0 ]]; then
+	getfacl "$_src" > "/tmp/$_src.facl";
+	setfacl -f "/tmp/$_src.facl" "$_dest";
+fi
+
+

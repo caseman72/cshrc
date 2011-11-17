@@ -1,0 +1,56 @@
+xterm*jumpScroll:               True
+xterm*scrollBar:                True
+xterm*saveLines:                2500
+xterm*scrollKey:                True
+xterm*scrollWithBuffer:         False
+xterm*scrollTtyKeypress:        False
+
+xterm*font:                     9x15
+xterm*vt100.Translations:       #override \
+                                <Key>Prior:     string(0x1b) string("[5~") \n\
+                                <Key>Next:      string(0x1b) string("[6~") \n\
+                                <Key>Find:      string(0x1b) string("[1~") \n\
+                                <Key>Select:    string(0x1b) string("[4~")
+
+! This next resource allows the listed characters to be considered
+! alphanumerics when double-clicking
+!                    $     -     .     /     :     [     ]     ;      ~
+xterm*charClass:    36:48,45:48,46:48,47:48,58:48,91:48,93:48,59:48,126:48
+xterm*visualBell:   False
+
+!Rxvt*background:    FloralWhite
+!Rxvt*background:    LightYellow
+!Rxvt*background:    LightSteelBlue
+!Rxvt*background:    AntiqueWhite
+Rxvt*background:    gray90
+Rxvt*foreground:    NavyBlue
+Rxvt*cursorColor:   firebrick4
+Rxvt*scrollColor:   MistyRose4
+
+Rxvt*backspacekey:  ^H
+Rxvt*saveLines:     2500
+Rxvt*geometry:      100x70+160+50
+Rxvt*font:          -b&h-lucidatypewriter-medium-r-normal-sans-12-120-75-75-m-70-iso8859-1
+Rxvt*boldFont:      -b&h-lucidatypewriter-medium-r-bold-sans-12-120-75-75-m-70-iso8859-1
+Rxvt*underLine:     False
+
+Rxvt*termName:      xterm
+Rxvt*color1:        firebrick3
+Rxvt*color2:        DarkGreen
+Rxvt*color3:        gold4
+Rxvt*color4:        blue2
+Rxvt*color5:        maroon4
+Rxvt*color6:        cyan4
+Rxvt*color7:        gray51
+
+
+Rxvt*colorULMode:   True
+Rxvt*colorBLMode:   True
+Rxvt*colorBDMode:   True
+
+Rxvt*colorUL:       firebrick3
+Rxvt*colorBD:       DarkGreen
+Rxvt*colorBL:       DarkGreen
+
+Rxvt.visualBell:    False
+

@@ -1,0 +1,74 @@
+#! /bin/bash
+#
+
+_rota="/usr/projects/rota"
+_cp="/usr/projects/centerpoint"
+_pwd=`pwd`
+
+# usage
+if [[ -z $1 ]]; then
+	/bin/echo -n "$HOME"
+	exit
+fi
+
+
+# just a location
+if [ -d $1 ]; then
+	/bin/echo -n $1
+	exit
+fi
+
+
+# alias [fiji]
+if [ -f "${HOME}/.aliastmp/curdir$1" ]; then
+	/bin/echo -n `cat "${HOME}/.aliastmp/curdir$1"`
+	exit
+fi
+
+
+# Underscores to slashes and remove last thing
+_GUESS=`/bin/echo -n "$1" | sed 's/_/\//g' | sed 's/\/[^\/]\+$/\//'`
+
+
+# HV [HV_Application_Abstract]
+_HV="$_rota/PHP_Web_Library/$_GUESS"
+if [ -d $_HV ]; then
+	/bin/echo -n $_HV
+	exit
+fi
+
+# Vision [Vision_Entities_Site]
+_VISION="$_rota/website/library/$_GUESS"
+if [ -d  $_VISION ]; then
+	/bin/echo -n $_VISION
+	exit
+fi
+
+# Centerpoint [Centerpoint_Entities_Site]
+_CP="$_cp/website/library/$_GUESS"
+if [ -d  $_CP ]; then
+	/bin/echo -n $_CP
+	exit
+fi
+
+# Views [view-profile-vacation]
+_VIEW=`/bin/echo -n "$1" | sed 's/^view-/views\//' | sed 's/-/\//g' | sed 's/\/[^\/]\+$/\//'`
+_VIEW="$_rota/website/public/themes/default/$_VIEW"
+if [ -d  $_VIEW ]; then
+	/bin/echo -n $_VIEW
+	exit
+fi
+
+
+# Action [/forms/message/sendlistingform/]
+_ACTION=`/bin/echo -n "$1" | sed 's/^\/[^\/]\+\(\/[^\/]\+\)\/.*$/\1\/controllers\//'`
+_ACTION="$_rota/website/public/themes/default/$_ACTION"
+if [ -d  $_ACTION ]; then
+	/bin/echo -n $_ACTION
+	exit
+fi
+
+
+/bin/echo -n $_pwd
+
+

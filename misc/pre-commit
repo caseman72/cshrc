@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+
+if git-rev-parse --verify HEAD 2>/dev/null
+then
+	git-diff-index -p -M --cached HEAD --
+else
+	# NEEDSWORK: we should produce a diff with an empty tree here
+	# if we want to do the same verification for the initial import.
+	:
+fi |
+perl -e '
+	my $root = `git rev-parse --git-dir`; chomp($root); $root =~ s/\/\.git$//;
+	my $jsmin = "java -jar /usr/local/jars/compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --formatting PRETTY_PRINT --js \"#src#\" --js_output_file \"#dest#\"";
+	my $exit = 0;
+	while (<>) {
+		if (m|^diff --git a((.*/)([^/]*\.js)) b\1$|) {
+			my $src = "${root}${1}";
+
+			next if ($src =~ /\/min\//);
+			next if ($src =~ /\.min\./);
+
+			my $dest = "${root}${2}min/${3}";
+
+			my $cmd = $jsmin;
+			$cmd =~ s/#src#/$src/g;
+			$cmd =~ s/#dest#/$dest/g;
+
+			print "$cmd\n";
+			my $output = `$cmd 2>&1`;
+
+			if($output) {
+				print $output . "\n";
+				$exit++;
+			}
+		}
+	}
+	exit($exit);
+';
+
+exit $?;
+

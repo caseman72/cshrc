@@ -1,0 +1,206 @@
+# alias file
+alias src 'source'
+alias resrc "source ${HOME}/.csh.aliases"
+
+alias vi 'vic -pc'
+alias vim 'vim -u ${HOME}/.vimrc'
+
+alias :: 'awk "BEGIN{ print \!* }" '
+alias rmf 'rm -rf'
+alias rmv 'rm -f \!:1 .rcs/\!:1,v'
+alias rlog 'rlog .rcs/\!*,v'
+#alias jsmin 'python ${HOME}/bin/jsmin.py <"\!:1" >"\!:2"'
+
+alias grep 'grep --color -P'
+
+# Check for windows
+if ($OSTYPE == 'cygwin' || $OSTYPE == 'posix') then
+  alias docs "cd /cygdrive/c/Documents\ and\ Settings/${USER}/My\ Documents/"
+  alias desk "cd /cygdrive/c/Documents\ and\ Settings/${USER}/Desktop/"
+  alias prog "cd /cygdrive/c/Program\ Files/"
+  alias cprog "cd /cygdrive/c/Program\ Files/"
+  alias cwin "cd /cygdrive/c/windows/"
+  alias sys32 "cd /cygdrive/c/windows/system32/"
+
+  alias c: 'cd /cygdrive/c'
+  alias d: 'cd /cygdrive/d'
+  alias e: 'cd /cygdrive/e'
+  alias f: 'cd /cygdrive/f'
+  alias g: 'cd /cygdrive/g'
+  alias h: 'cd /cygdrive/h'
+  alias i: 'cd /cygdrive/i'
+  alias j: 'cd /cygdrive/j'
+  alias x: 'cd /cygdrive/x'
+  alias y: 'cd /cygdrive/y'
+  alias z: 'cd /cygdrive/z'
+
+  alias winex 'cygstart \!*'
+endif
+
+alias psg 'ps -eaf | grep \!*'
+alias ptg 'pstree -Apal | grep \!*'
+alias ppg 'pstree -Apal \!:1 | grep \!:2*'
+
+# set-directory, copy-to-directory, cd-to-dir
+set _DIRFILE=$HOME/.aliastmp/curdir
+set _MONTH=`date "+%Y-%m"`
+set _YEAR=`date "+%Y"`
+
+alias cdsd 'cd "`cat ${_DIRFILE}`"'
+alias sd  'echo `pwd` > ${_DIRFILE}'
+alias cd2d 'cd "`cat ${_DIRFILE}`"'
+alias cp2d 'cp -R "\!:1" "`cat ${_DIRFILE}`"'
+alias mv2d 'mv "\!:1" "`cat ${_DIRFILE}`"'
+alias cpfd 'cp -R "`cat ${_DIRFILE}`/\!:1" .'
+alias mvfd 'mv "`cat ${_DIRFILE}`/\!:1" .'
+alias cs 'cd'
+
+#alias 'cd.' 'cd "`cat ${_DIRFILE}\!:1`"'
+alias 'cd.' 'cd "`${HOME}/bin/parse-loc \!:1`"'
+alias 'sd.' 'echo `pwd` > ${_DIRFILE}\!:1'
+alias 'cd2d.' 'cd "`cat ${_DIRFILE}\!:1`"'
+alias 'cdsd.' 'cd "`cat ${_DIRFILE}\!:1`"'
+alias 'cp2d.' 'cp -R "\!:2*" "`cat ${_DIRFILE}\!:1`"'
+alias 'mv2d.' 'mv "\!:2*" "`cat ${_DIRFILE}\!:1`"'
+alias 'cpfd.' 'cp -R "`cat ${_DIRFILE}\!:1`/\!:2*" .'
+alias 'mvfd.' 'mv "`cat ${_DIRFILE}\!:1`/\!:2*" .'
+
+alias 'cd..' 'cd ..'
+alias 'cd../' 'cd ../\!*'
+alias 'cd../..' 'cd ../..'
+alias 'cd../../' 'cd ../../\!*'
+alias 'cd../../..' 'cd ../../..'
+alias 'cd../../../' 'cd ../../../\!*'
+alias 'cd../../../..' 'cd ../../../..'
+alias 'cd../../../../' 'cd ../../../../\!*'
+alias cdd 'cd `dirname "\!:*"`'
+alias cdl 'cd `readlink "\!:1" | xargs dirname`'
+alias ch664 'chmod 664 *.* .rcs/*.*'
+#alias status 'svn status | grep -v "\.rcs|\.swp"'
+alias status 'git status'
+alias gdiff 'git diff -w origin'
+alias pull 'git pull'
+alias 'git-save' 'git commit -a -m'
+alias 'git-master' 'git checkout master'
+
+alias amke make
+alias amek make
+alias maek make
+alias nmkae make
+alias mkae make
+alias nmake make
+alias mnake make
+
+alias eng 'env | grep \!:1'
+alias pe 'printenv'
+alias se 'setenv'
+alias unse 'unsetenv'
+alias paths 'printenv \!:1 | tr : "\n" '
+alias pc 'printenv $CLASSPATH | tr \; "\n" '
+alias pp "paths PATH"
+alias edv 'set varfile=/tmp/$$.var; printenv \!:1 | tr : "\n" > $varfile; vi $varfile; set newvar=`cat $varfile`; setenv \!:1 `echo "$newvar" | tr " " : `; rm $varfile'
+alias edcp 'set varfile=/tmp/$$.var; printenv $CLASSPATH | tr \; "\n" > $varfile; vi $varfile; set newvar=`cat $varfile`; setenv $CLASSPATH `echo "$newvar" | tr " " \; `; rm $varfile'
+alias savecp 'echo $CLASSPATH > ~/.classpath'
+alias setcp 'se  CLASSPATH `cat ~/.classpath`'
+alias edp  'edv PATH'                                   # Edit Path            (edp)
+alias a2v  'se \!:1 ${\!:1}:\!:2'                       # Add 2 variable       (a2v)
+alias p2v  'se _FOO_ \!:2; se \!:1 "${_FOO_}:${\!:1}"'  # Prepend 2 var        (p2v)
+alias a2cp 'a2v CLASSPATH'                              # Add 2 ClassPath      (a2cp)
+alias p2cp 'p2v CLASSPATH'                              # Prepend 2 ClassPath  (p2cp)
+alias a2p  'a2v PATH \!:1'                              # Add 2 path           (a2p)
+alias p2p  'p2v PATH \!:1'                              # Prepend 2 path       (p2p)
+
+alias psk 'kill -9 `psid \!*`'
+alias hsg 'history | grep \!*'
+alias path 'printenv PATH'
+
+### Colors
+#
+if( $OSTYPE == 'darwin' ) then
+  alias lsn 'ls'
+  alias lln 'ls -l'
+  alias ls-alias 'ls ${HOME}/.aliastmp/curdir* |sed "s/^.*\/curdir//" |tr "\n" " "'
+  alias ls-saved 'ls `cat ${HOME}/.aliastmp/curdir`'
+  alias ls-ssh '(grep "Host " ${HOME}/.ssh/config |sed "s/^Host //"; history |sed "s/^[^0-9]*[0-9]*[^0-9:]*[0-9:]*\s*//g" |grep "^ssh" |sed "s/^ssh //";) |sort -u |tr "\n" " "'
+  alias ls 'ls -G'
+  setenv LSCOLORS 'cxgxcxdxbxegedabagacad'
+else
+  alias lsn 'ls --color=never'
+  alias lln 'ls -l --color=never'
+  alias ls-alias 'ls --color=never ${HOME}/.aliastmp/curdir* |sed "s/^.*\/curdir//" |tr "\n" " "'
+  alias ls-saved 'ls --color=never `cat ${HOME}/.aliastmp/curdir`'
+  alias ls-ssh '(grep "Host " ${HOME}/.ssh/config |sed "s/^Host //"; history |sed "s/^[^0-9]*[0-9]*[^0-9:]*[0-9:]*\s*//g" |grep "^ssh" |sed "s/^ssh //";) |sort -u |tr "\n" " "'
+  alias ls-branches 'git-branch |sed "s/^[* ]*//g" |tr "\n" " "'
+  alias ls 'ls --color'
+endif
+
+
+alias ll 'ls -l'
+alias lll 'll'
+
+### Conditional args
+#
+alias ls. 'eval "if (\!*) then \\
+  ls -d \!*/.* \\
+else \\
+  ls -d .* \\
+endif"'
+alias ll. 'eval "if (\!*) then \\
+  ll -d \!*/.* \\
+else \\
+  ll -d .* \\
+endif"'
+
+alias sshh 'ssh `echo "\!*" | cut -d":" -f1`'
+alias trn 'tr "\n" " "; echo'
+
+alias less 'less -R'
+
+alias la 'ls -a'
+alias lfa 'la -f'
+alias lla 'll -a'
+alias lld 'll \!* |/usr/bin/grep ^d'
+alias lsd "lln \!* |/usr/bin/grep ^d | sed 's/^.*\s\s*//g' | tr '\n' ' ';echo ''"
+alias lless 'll \!* | less'
+alias ln. 'ln -s "`pwd`/\!:1" \!:2'
+
+alias cls 'clear'
+alias er 'eval `resize`'
+alias fnd 'find . -name \!:1'
+alias findg 'find . -name \!:1 -exec grep \!:2 {} \;'
+alias findgp 'find . -name \!:1 -exec grep \!:2 {} \;' -print
+alias findgi 'find . -name \!:1 -exec grep -i \!:2 {} \;'
+alias findgip 'find . -name \!:1 -exec grep -i \!:2 {} \;' -print
+alias findgl 'find . -name \!:1 -exec grep -l \!:2 {} \;'
+
+### Save for code
+#
+alias lle "rm -f ~/tmp/$$.lle;echo 'echo \0042find . -maxdepth 1 -regex \0047.*\!:1:q\0047\0042;\n foreach n \0050 \!:1*:q \0051 \n echo \0042-o -regex \0047.*\0044n\0047\0042\n end\n' > ~/tmp/$$.lle;source ~/tmp/$$.lle |tr '\n' ' ' |tr '..' '.' |sh |sed 's/\.\///g'"
+
+alias cato 'od -c '
+alias cath 'od -h '
+alias :q 'exit'
+alias :qc "echo -n >$HOME/.history; history -c; exit;"
+
+if ($HOST == 'ontheDL') then
+  alias bitt 'bittorrent-curses --minport 8080 --maxport 9000 --max_upload_rate 12500'
+  alias sab_init '/usr/bin/python /home/caseman/sandbox/SABnzbd-0.5.6/SABnzbd.py -d -s 192.168.1.127:7777'
+
+else if ($HOST == 'rocksolid') then
+  alias scpToCurrentI 'scp screamR:\*.avi /cygdrive/i/Current/.'
+  alias scpToCurrentH 'scp screamR:\*.avi /cygdrive/h/Current/.'
+
+else if ($HOST == 'Area51') then
+  alias killTCSH "ps -eaf | grep tcsh | sed 's/\s\+/ /g' | sed 's/^\s\+//g' | cut -d' ' -f2 | xargs kill -9"
+
+else if ($HOST == 'machone' || $HOST == 'machone.local') then
+  alias desk 'cd ~/Desktop'
+
+endif
+if (-f '/etc/init.d/cron' ) then
+  alias recron 'sudo /etc/init.d/cron restart'
+endif
+
+alias lynx 'lynx -accept_all_cookies -nopause -noreferer -vikeys -useragent="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)"'
+alias rgrep 'grep -r \!:1- \!$ | grep -v "\.git|\.svn|\.rcs" | grep --color \!:1-'
+

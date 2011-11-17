@@ -1,0 +1,21 @@
+[alias]
+	save = commit -a -m
+	undo = checkout HEAD
+	co = checkout
+
+[core]
+	excludesfile = "${HOME}/.gitignore"
+
+[user]
+	name = Casey Manion
+	email = casey@manion.com
+
+[color]
+	ui = auto
+
+[pivotal]
+	api-token = c0de5c48dc464839abac5d705656edb7
+	full-name = Casey Manion
+#	integration-branch = CWM
+	project-id = 209679
+

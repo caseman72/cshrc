@@ -1,0 +1,13 @@
+ForegroundColour=0,0,129
+BackgroundColour=229,229,229
+CursorColour=129,0,0
+CursorType=0
+BackspaceSendsBS=1
+CopyAsRTF=0
+Scrollbar=0
+Columns=203
+Rows=80
+BoldAsColour=1
+Transparency=0
+OpaqueWhenFocused=1
+FontQuality=3

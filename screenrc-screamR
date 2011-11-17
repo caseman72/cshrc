@@ -1,0 +1,25 @@
+escape ^Bb # Instead of Control-a, make the escape/command character be Control-b
+
+autodetach on # Autodetach session on hangup instead of terminating screen completely
+
+startup_message off # Turn off the splash screen
+
+defscrollback 30000 # Use a 30000-line scrollback buffer
+
+termcapinfo xterm ti@:te@
+termcapinfo rxvt  ti@:te@
+
+shell -tcsh
+
+vbell off
+
+bind ^S xon
+bind s xon
+
+caption always "%{= kw} %-w%{= bW}%n%t%{-}%+w %-= %u@%H | %Y-%m-%d | %LD | %c %A "
+
+## Default screens
+screen -t -screamR 0 ssh -t screamR "cd `cat /home/caseman/.aliastmp/curdirmovies`; tcsh"
+screen -t -rocksolid 1 
+
+
