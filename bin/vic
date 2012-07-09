@@ -48,6 +48,7 @@ my $HomeDir     = $ENV{'HOME'};
 my $Version     = 'vic v0.06 regan@ao.com | v0.06.4 casey@manion.com';
 my $PHPCheck    = '';
 my $PyCheck     = '';
+my $RubyCheck   = '';
 my $PerlCheck   = '';
 my $JSCheck   = '';
 
@@ -57,57 +58,55 @@ my $JSCheck   = '';
 # #
   $| = 1;
 
-  if ($#ARGV < 2)
+  ### Arguments
+  #
+  if ($#ARGV < 0)
   {
-    ### Perl syntax checker
+    print STDERR "Usage: vic file1 ...\n";
+    exit 1;
+  }
+
+  ### Syntax checking
+  #
+  if ($#ARGV < 2 && $ARGV[0] eq '-pc')
+  {
+    # drop the -pc
+    shift(@ARGV);
+
+    ### Perl
     #
-    if ($ARGV[0] eq '-perl' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.pl$/))
+    if ($ARGV[0] =~ /\.pl$/)
     {
-      shift(@ARGV);
       $PerlCheck = "perl";
     }
-
-    ### PHP syntax checker
+    ### PHP
     #
-    elsif ($ARGV[0] eq '-php' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.(php|htm|html)$/))
+    elsif ($ARGV[0] =~ /\.(php|htm|html)$/)
     {
-      shift(@ARGV);
       if(-x "$HomeDir/bin/php")
       {
         $PHPCheck = "$HomeDir/bin/php";
       }
       $PHPCheck = "php";
     }
-    elsif( $ARGV[0] eq '-php5' )
+    ### Javascript
+    #
+    elsif ($ARGV[0] =~ /\.js$/)
     {
-      shift(@ARGV);
-      if(-x "$HomeDir/bin/php5")
-      {
-        $PHPCheck = "$HomeDir/bin/php5";
-      }
-    }
-    elsif( $ARGV[0] eq '-php4' )
-    {
-      shift(@ARGV);
-      if(-x "$HomeDir/bin/php4")
-      {
-        $PHPCheck = "$HomeDir/bin/php4";
-      }
-    }
-    elsif ($ARGV[0] eq '-js' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.js$/))
-    {
-      shift(@ARGV);
       if(-e "$HomeDir/bin/compiler.jar")
       {
-        $JSCheck = "java -jar $HomeDir/bin/compiler.jar";
+        if ($ENV{'OSTYPE'} eq 'cygwin') {
+          $JSCheck = "java -jar \"`cygpath -w $HomeDir/bin/compiler.jar`\"";
+        }
+        else {
+          $JSCheck = "java -jar $HomeDir/bin/compiler.jar";
+        }
       }
     }
-
-    ### Python syntax checker
+    ### Python
     #
-    elsif ($ARGV[0] eq '-py' || ($ARGV[0] eq '-pc' && $ARGV[1] =~ /\.py$/))
+    elsif ($ARGV[0] =~ /\.py$/)
     {
-      shift(@ARGV);
       if(-x "$HomeDir/bin/py")
       {
         $PyCheck = "$HomeDir/bin/py";
@@ -115,21 +114,16 @@ my $JSCheck   = '';
       $PyCheck = "python"
     }
 
-  }
-
-  ### Not found
-  #
-  if ($ARGV[0] =~ /^[-]p[cyh]?/)
-  {
-    shift(@ARGV);
-  }
-
-  ### Arguments
-  #
-  if ($#ARGV < 0)
-  {
-    print STDERR "Usage: vic file1 ...\n";
-    exit 1;
+    ### Ruby
+    #
+    elsif ($ARGV[0] =~ /\.rb$/)
+    {
+      if(-x "$HomeDir/bin/ruby")
+      {
+        $RubyCheck = "$HomeDir/bin/ruby";
+      }
+      $RubyCheck = "ruby";
+    }
   }
 
   ### Do all files
@@ -407,6 +401,12 @@ sub EditFile
   elsif ($PyCheck)
   {
     system("$PyCheck -m py_compile \"$fname\"");
+  }
+
+  # Ruby
+  elsif ($RubyCheck)
+  {
+    system("$RubyCheck -c \"$fname\"");
   }
 
   # time tracker
